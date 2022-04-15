@@ -1,14 +1,14 @@
 # Spring MVC环境配置
-##0. 新建工程，并配置web
-###0.1 新建web并修改目录结构
+## 0. 新建工程，并配置web
+### 0.1 新建web并修改目录结构
 ![img_1.png](src/main/resources/img/img_1.png)
 
 ![img.png](src/main/resources/img/img.png)
 
-###0.2 配置tomcat
+### 0.2 配置tomcat
 ![img_2.png](src/main/resources/img/img_2.png)
 
-##1. Maven依赖spring-webmvc
+## 1. Maven依赖spring-webmvc
 ```xml
     <dependencies>
         <dependency>
@@ -18,7 +18,7 @@
         </dependency>
     </dependencies>
 ```
-##2. web.xml配置DispatcherServlet
+## 2. web.xml配置DispatcherServlet
 **web.xml:**
 
 ```xml
@@ -55,7 +55,7 @@
     </servlet-mapping>
 </web-app>
 ```
-##3. 配置applicationContext的mvc标记
+## 3. 配置applicationContext的mvc标记
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -103,7 +103,7 @@
     <mvc:default-servlet-handler/>
 </beans>
 ```
-##4. 开发Controller控制器
+## 4. 开发Controller控制器
 新建`net.kokwind.springmvc.controller`包，在此包下新建controller测试类`TestController`
 ```java
 package net.kokwind.springmvc.controller;
@@ -122,26 +122,28 @@ public class TestController {
 }
 ```
 把mvc的maven依赖包放到web目录下
+
 ![img.png](src/main/resources/img/img3.png)
 
 此时启动tomcat，打开浏览器
+
 ![img.png](src/main/resources/img/img4.png)
 
 相比servlet进行web请求的处理要便捷的多，Spring MVC框架简化了web处理的过程，你可以把`TestController`控制器看成原有servlet的替代品，在开发的时候编写标准的方法也不再去引入像servlet那样编写请求和相应对象，只需要在这些方法上增加对应的注解，就可以完成原本比较复杂的处理以及结果的返回了。这就是Spring MVC带来的便利之处。
 
 ![img.png](src/main/resources/img/img5.png)
 
-##5. Spring MVC数据绑定
-###5.1 URL Mapping（URL映射）
+## 5. Spring MVC数据绑定
+### 5.1 URL Mapping（URL映射）
 - URL Mapping指将URL与Controller方法绑定
 - 通过将URL与方法绑定，Spring MVC便可通过Tomcat对外暴露服务
 
-###5.2 URL Mapping注解
+### 5.2 URL Mapping注解
 - @RequestMapping- 通用绑定
 - @GetMapping - 绑定Get请求
 - @PostMapping - 绑定Post请求
 
-###5.3 新建一个URL测试类
+### 5.3 新建一个URL测试类
 在`net.kokwind.springmvc.controller`包下新建`URLMappingController`类
 ```java
 package net.kokwind.springmvc.controller;
@@ -168,8 +170,10 @@ public class URLMappingController {
 ```
 启动Tomcat，打开浏览器
 使用`get`方法时：
+
 ![img.png](src/main/resources/img/img6.png)
 使用`post`方法时，因为我们映射的是`post`请求，所以提示405：
+
 ![img.png](src/main/resources/img/img7.png)
 
 修改之前的`index.html`代码,添加一个表单按钮
@@ -188,9 +192,11 @@ public class URLMappingController {
 </html>
 ```
 打开浏览器`localhost`，点击按钮
+
 ![img.png](src/main/resources/img/img8.png)
 
 `post`就正常显示了
+
 ![img_1.png](src/main/resources/img/img9.png)
 
 `@RequestMapping`注解用在类上来指定请求的全局映射路径，之后的`get`和`post`方法都会被映射到这个路径下
@@ -223,3 +229,57 @@ public class URLMappingController {
     }
 }
 ```
+
+### 5.4 接受请求参数
+之前的`index.html`表单里只要添加里一个提交按钮，正常的表单是带有数据的
+Spring MVC接收请求参数的常用做法
+- 使用Controller方法参数接收
+- 使用Java Bean接收数据
+
+#### 5.4.1 使用Controller方法参数接收
+```html
+<form action="/post" method="post">
+    <input type="text" name="username">
+    <input type="password" name="password">
+    <input type="submit" value="Submit" />
+</form>
+```
+修改`get`和`post`方法添加参数
+
+```java
+package net.kokwind.springmvc.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+//@Controller注解可以看做是servlet的替代品，它可以把一个类标识为一个controller
+//@RequestMapping注解用在类上指定请求的全局映射路径，之后的get和post方法都会被映射到这个路径下
+//localhost/method/get
+//localhost/method/post
+//@RequestMapping注解用在方法上表示不再区分get和post请求
+@Controller
+public class URLMappingController {
+    //get请求也是可以通过?manager_name=lily这样的方式接收参数的，
+    //这时需要使用@RequestParam把名字注入到参数里
+    @GetMapping("/get")
+    @ResponseBody
+    public String getMapping(@RequestParam("manager_name") String managerName) {
+        return "manager_name" + ":" + managerName;
+    }
+
+    @PostMapping("/post")
+    @ResponseBody
+    public String postMapping(String username, String password) {
+        return username + ":" + password;
+    }
+}
+```
+
+![img.png](src/main/resources/img/img10.png)
+
+![img_1.png](src/main/resources/img/img11.png)
+
+![img.png](src/main/resources/img/img12.png)
