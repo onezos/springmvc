@@ -172,6 +172,7 @@ public class URLMappingController {
 使用`get`方法时：
 
 ![img.png](src/main/resources/img/img6.png)
+
 使用`post`方法时，因为我们映射的是`post`请求，所以提示405：
 
 ![img.png](src/main/resources/img/img7.png)
@@ -283,3 +284,217 @@ public class URLMappingController {
 ![img_1.png](src/main/resources/img/img11.png)
 
 ![img.png](src/main/resources/img/img12.png)
+
+#### 5.4.2 使用Java Bean接收请求参数
+当表单要输入的参数特别多的情况下，我们需要在对应的方法里增加大量的参数，这样就非常不方便维护，所以可以新建一个实体类
+
+```java
+package net.kokwind.springmvc.entity;
+
+public class User {
+    private String username;
+    private String password;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+```
+然后在对应的方法里，参数改成这个实体类就可以了。
+```java
+package net.kokwind.springmvc.controller;
+
+import net.kokwind.springmvc.entity.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+//@Controller注解可以看做是servlet的替代品，它可以把一个类标识为一个controller
+//@RequestMapping注解用在类上指定请求的全局映射路径，之后的get和post方法都会被映射到这个路径下
+//localhost/method/get
+//localhost/method/post
+//@RequestMapping注解用在方法上表示不再区分get和post请求
+@Controller
+public class URLMappingController {
+    //get请求也是可以通过?manager_name=lily这样的方式接收参数的，
+    //这时需要使用@RequestParam把名字注入到参数里
+    @GetMapping("/get")
+    @ResponseBody
+    public String getMapping(@RequestParam("manager_name") String managerName) {
+        return "manager_name" + ":" + managerName;
+    }
+    @PostMapping("/post")
+    @ResponseBody
+    public String postMapping(String username, String password) {
+        return username + ":" + password;
+    }
+
+    @PostMapping("/post1")
+    @ResponseBody
+    public String postMapping1(User user){
+        return user.getUsername() + ":" + user.getPassword();
+    }
+}
+```
+最后页面的表单跳转页需要修改为：
+```html
+<form action="/post1" method="post">
+    <input type="text" name="username">
+    <input type="password" name="password">
+    <input type="submit" value="Submit" />
+</form>
+```
+
+![img.png](src/main/resources/img/img13.png)
+
+### 5.5 综合示例
+接收如下表单的复合数据
+
+![img.png](src/main/resources/img/img14.png)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>调查问卷</title>
+    <style>
+        .container {
+            position: absolute;
+            border: 1px solid #cccccc;
+            left: 50%;
+            top: 50%;
+            width: 400px;
+            height: 300px;
+            margin-left: -200px;
+            margin-top: -150px;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        h2{
+            margin: 10px 0px;
+            text-align: center;
+        }
+        h3{
+            margin: 10px  0px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>调查问卷</h2>
+        <form action="./apply" method="post">
+        <h3>您的姓名</h3>
+        <input name="name" class="text"  style="width: 150px">
+        <h3>您正在学习的技术方向</h3>
+        <select name="course" style="width: 150px">
+            <option value="java">Java</option>
+            <option value="h5">HTML5</option>
+            <option value="python">Python</option>
+            <option value="php">PHP</option>
+        </select>
+        <div>
+            <h3>您的学习目的：</h3>
+            <input type="checkbox" name="purpose" value="1">就业找工作
+            <input type="checkbox" name="purpose" value="2">工作要求
+            <input type="checkbox" name="purpose" value="3">兴趣爱好
+            <input type="checkbox" name="purpose" value="4">其他
+        </div>
+        <div style="text-align: center;padding-top:10px" >
+            <input type="submit" value="提交" style="width:100px">
+        </div>
+        </form>
+
+    </div>
+</body>
+</html>
+```
+
+- 利用数组或者List接受请求中的复合数据
+- 利用@RequestParam为参数设置默认值
+- 使用Map对象接受请求参数及注意事项
+  - 如果当前表单不包含复合数据，可以使用Map接收，和实体类类似
+  - 如果包含复合数据，则Map只能接收复合数据的第一条
+
+新建一个控制器
+```java
+package net.kokwind.springmvc.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class FormController {
+    @PostMapping("/apply")
+    @ResponseBody
+    public String apply(@RequestParam(value = "name", defaultValue = "ANON") String name,String course,Integer[] purpose){
+        System.out.println(name);
+        System.out.println(course);
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.length;
+    }
+}
+```
+打开网页，提交如下数据
+
+![img.png](src/main/resources/img/img15.png)
+
+![img.png](src/main/resources/img/img16.png)
+
+使用List接收复合数据
+```java
+package net.kokwind.springmvc.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
+
+@Controller
+public class FormController {
+    @PostMapping("/apply")
+    @ResponseBody
+    //1.使用数组接收复合参数
+    public String apply(@RequestParam(value = "name", defaultValue = "ANON") String name, String course, Integer[] purpose){
+        System.out.println(name);
+        System.out.println(course);
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.length;
+    }
+
+    @PostMapping("/apply1")
+    @ResponseBody
+    //2.使用List接收复合参数
+    public String apply1(@RequestParam(value = "name", defaultValue = "ANON") String name, String course, @RequestParam List<Integer> purpose){
+        System.out.println(name);
+        System.out.println(course);
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.size();
+    }
+}
+
+```

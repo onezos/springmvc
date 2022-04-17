@@ -1,5 +1,6 @@
 package net.kokwind.springmvc.controller;
 
+import net.kokwind.springmvc.entity.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,5 +25,11 @@ public class URLMappingController {
     @ResponseBody
     public String postMapping(String username, String password) {
         return username + ":" + password;
+    }
+
+    @PostMapping("/post1")
+    @ResponseBody
+    public String postMapping1(User user){
+        return user.getUsername() + ":" + user.getPassword();
     }
 }
