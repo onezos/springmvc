@@ -498,3 +498,438 @@ public class FormController {
 }
 
 ```
+
+### 5.6 复杂内容表单
+遇到比较复杂的表单，我们需要拆分多个对象关联到一起
+
+![img.png](src/main/resources/img/img17.png)
+
+新建对象2的实体类
+```java
+package net.kokwind.springmvc.entity;
+
+public class Delivery {
+    private String name;
+    private String address;
+    private String mobile;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+}
+```
+新建对象1的实体类，关联对象2
+```java
+package net.kokwind.springmvc.entity;
+
+import java.util.List;
+
+public class Form {
+    private String name;
+    private String course;
+    private List<Integer> purpose;
+    private Delivery delivery = new Delivery();
+
+    public Delivery getDelivery() {
+        return delivery;
+    }
+
+    public void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCourse() {
+        return course;
+    }
+
+    public void setCourse(String course) {
+        this.course = course;
+    }
+
+    public List<Integer> getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(List<Integer> purpose) {
+        this.purpose = purpose;
+    }
+}
+```
+控制器中新建对应的方法`apply2`
+```java
+package net.kokwind.springmvc.controller;
+
+import net.kokwind.springmvc.entity.Delivery;
+import net.kokwind.springmvc.entity.Form;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
+
+@Controller
+public class FormController {
+    @PostMapping("/apply")
+    @ResponseBody
+    //1.使用数组接收复合参数
+    public String apply(@RequestParam(value = "name", defaultValue = "ANON") String name, String course, Integer[] purpose){
+        System.out.println(name);
+        System.out.println(course);
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.length;
+    }
+
+    @PostMapping("/apply1")
+    @ResponseBody
+    //2.使用List接收复合参数
+    public String apply1(@RequestParam(value = "name", defaultValue = "ANON") String name, String course, @RequestParam List<Integer> purpose){
+        System.out.println(name);
+        System.out.println(course);
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.size();
+    }
+
+    @PostMapping("/apply2")
+    @ResponseBody
+    //2.使用List接收复合参数
+    public String apply2(Form form){
+        String name = form.getName();
+        String course = form.getCourse();
+        List<Integer> purpose = form.getPurpose();
+        Delivery delivery = form.getDelivery();
+
+        for(Integer i:purpose){
+            System.out.println(i);
+        }
+        return name + " " + course + " " + purpose.size() + " " + delivery.getName() + " " + delivery.getMobile() + " " + delivery.getAddress();
+    }
+}
+```
+修改网页文件, 在对象2的表单中添加对象2的关联`delivery`。
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>调查问卷</title>
+    <style>
+        .container {
+            position: absolute;
+            border: 1px solid #cccccc;
+            left: 50%;
+            top: 50%;
+            width: 400px;
+            height: 600px;
+            margin-left: -200px;
+            margin-top: -300px;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        h2{
+            margin: 10px 0px;
+            text-align: center;
+        }
+        h3{
+            margin: 10px  0px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>调查问卷</h2>
+        <form action="./apply2" method="post">
+        <h3>您的姓名</h3>
+        <input name="name" class="text"  style="width: 150px">
+        <h3>您正在学习的技术方向</h3>
+        <select name="course" style="width: 150px">
+            <option value="java">Java</option>
+            <option value="h5">HTML5</option>
+            <option value="python">Python</option>
+            <option value="php">PHP</option>
+        </select>
+        <div>
+            <h3>您的学习目的：</h3>
+            <input type="checkbox" name="purpose" value="1">就业找工作
+            <input type="checkbox" name="purpose" value="2">工作要求
+            <input type="checkbox" name="purpose" value="3">兴趣爱好
+            <input type="checkbox" name="purpose" value="4">其他
+        </div>
+        <h3>收货人</h3>
+        <input name="delivery.name" class="text"  style="width: 150px">
+        <h3>联系电话</h3>
+        <input name="delivery.mobile" class="text"  style="width: 150px">
+        <h3>收货地址</h3>
+        <input name="delivery.address" class="text"  style="width: 150px">
+
+        <div style="text-align: center;padding-top:10px" >
+            <input type="submit" value="提交" style="width:100px">
+        </div>
+        </form>
+
+    </div>
+</body>
+</html>
+```
+点击按钮提交表单，结果显示：
+
+![img.png](src/main/resources/img/img18.png)
+
+
+
+### 5.7 日期类型转换
+`springMVC`使用`@DateTimeFormat`注解来指定日期类型的转换。
+我们在之前的`index.html`中增加一个日期类型的输入框，并在表单中添加一个日期类型的输入框。
+
+```html
+<form action="/post" method="post">
+    <input type="text" name="username">
+    <input type="password" name="password">
+    <input type="text" name="createTime">
+    <input type="submit" value="Submit" />
+</form>
+```
+修改对应的控制器代码，注意在控制器中使用`@DateTimeFormat`注解来指定日期类型的转换。
+```java
+package net.kokwind.springmvc.controller;
+
+import net.kokwind.springmvc.entity.User;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Date;
+
+//@Controller注解可以看做是servlet的替代品，它可以把一个类标识为一个controller
+//@RequestMapping注解用在类上指定请求的全局映射路径，之后的get和post方法都会被映射到这个路径下
+//localhost/method/get
+//localhost/method/post
+//@RequestMapping注解用在方法上表示不再区分get和post请求
+@Controller
+public class URLMappingController {
+    //get请求也是可以通过?manager_name=lily这样的方式接收参数的，
+    //这时需要使用@RequestParam把名字注入到参数里
+    @GetMapping("/get")
+    @ResponseBody
+    public String getMapping(@RequestParam("manager_name") String managerName) {
+        return "manager_name" + ":" + managerName;
+    }
+    @PostMapping("/post")
+    @ResponseBody
+    public String postMapping(String username, String password, @DateTimeFormat(pattern = "yyyy-MM-dd") Date createTime) {
+        return username + ":" + password + ":" + createTime;
+    }
+
+    @PostMapping("/post1")
+    @ResponseBody
+    public String postMapping1(User user){
+        return user.getUsername() + ":" + user.getPassword() + ":" + user.getCreateTime();
+    }
+}
+```
+修改对应的实体类，也增加了`@DateTimeFormat`注解，并且指定了日期格式。
+```java
+package net.kokwind.springmvc.entity;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.util.Date;
+
+public class User {
+    private String username;
+    private String password;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date createTime;
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+```
+
+但是这种添加注解的方式，在大型项目中使用起来非常不方便，所以我们还可以引入默认的全局配置来设置日期格式
+作为全局的日期转换器，我们可以新建一个转换器类
+
+```java
+package net.kokwind.springmvc.converter;
+
+import org.springframework.core.convert.converter.Converter;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class MyDateConverter implements Converter<String, Date> {
+    public Date convert(String s) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date d = sdf.parse(s);
+            return d;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
+```
+修改控制器的get方法，添加参数`Date createTime`
+```java
+package net.kokwind.springmvc.controller;
+
+import net.kokwind.springmvc.entity.User;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Date;
+
+//@Controller注解可以看做是servlet的替代品，它可以把一个类标识为一个controller
+//@RequestMapping注解用在类上指定请求的全局映射路径，之后的get和post方法都会被映射到这个路径下
+//localhost/method/get
+//localhost/method/post
+//@RequestMapping注解用在方法上表示不再区分get和post请求
+@Controller
+public class URLMappingController {
+    //get请求也是可以通过?manager_name=lily这样的方式接收参数的，
+    //这时需要使用@RequestParam把名字注入到参数里
+    @GetMapping("/get")
+    @ResponseBody
+    public String getMapping(@RequestParam("manager_name") String managerName, Date createTime) {
+        return "manager_name" + ":" + managerName + ":" + createTime;
+    }
+    @PostMapping("/post")
+    @ResponseBody
+    public String postMapping(String username, String password, @DateTimeFormat(pattern = "yyyy-MM-dd") Date createTime) {
+        return username + ":" + password + ":" + createTime;
+    }
+
+    @PostMapping("/post1")
+    @ResponseBody
+    public String postMapping1(User user){
+        return user.getUsername() + ":" + user.getPassword() + ":" + user.getCreateTime();
+    }
+}
+```
+配置全局`applicationContext.xml`文件，添加转换器
+
+在`<mvc:annotation-driven conversion-service="conversionService" />`添加了`conversion-service="conversionService`
+
+新建`beanid`为`conversionService`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mv="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/mvc
+            http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+    <!--
+        context:component-scan 标签作用
+        在Spring IoC初始化过程中，自动创建并管理net.kokwind.springmvc及子包中
+        拥有以下注解的对象。
+        @Repository 存放在Dao类上，通常是与数据进行直接交互的类
+        @Service 业务逻辑类，通常是放在Service类上
+        @Controller 用于描述Spring MVC的控制器类
+        @Component  组件，不好区分类型，就使用此注解
+    -->
+    <context:component-scan base-package="net.kokwind.springmvc" />
+    <!--
+        启用Spring的注解开发模式，默认为false
+        mvc:annotation-driven 标签作用
+        @Controller 用于描述Spring MVC的控制器类
+        @RequestMapping 用于描述请求映射
+        @ResponseBody 用于描述返回JSON数据
+        @RequestParam 用于描述请求参数
+        @PathVariable 用于描述请求路径参数
+        @ModelAttribute 用于描述请求参数
+        @SessionAttributes 用于描述Session属性
+        @ExceptionHandler 用于描述异常处理
+        @InitBinder 用于描述请求参数绑定
+        @PreHandle 用于描述请求参数绑定
+        @PostHandle 用于描述请求参数绑定
+        @AfterHandle 用于描述请求参数绑定
+        @PreHandle 用于描述请求参数绑定
+        @PostHandle 用于描述请求参数绑定
+        @AfterHandle 用于描述请求参数绑定
+      -->
+    <mvc:annotation-driven conversion-service="conversionService" />
+    <!-- 将图片/JS/CSS等静态资源排除在外，可提高执行效率 -->
+    <mvc:default-servlet-handler/>
+
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="net.kokwind.springmvc.converter.MyDateConverter"/>
+            </set>
+        </property>
+    </bean>
+
+</beans>
+```
+打开网页
+
+![img.png](src/main/resources/img/img19.png)
+

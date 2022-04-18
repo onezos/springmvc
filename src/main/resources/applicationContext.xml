@@ -38,7 +38,16 @@
         @PostHandle 用于描述请求参数绑定
         @AfterHandle 用于描述请求参数绑定
       -->
-    <mvc:annotation-driven />
+    <mvc:annotation-driven conversion-service="conversionService" />
     <!-- 将图片/JS/CSS等静态资源排除在外，可提高执行效率 -->
     <mvc:default-servlet-handler/>
+
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="net.kokwind.springmvc.converter.MyDateConverter"/>
+            </set>
+        </property>
+    </bean>
+
 </beans>
