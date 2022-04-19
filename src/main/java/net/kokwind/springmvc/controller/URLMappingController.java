@@ -3,10 +3,12 @@ package net.kokwind.springmvc.controller;
 import net.kokwind.springmvc.entity.User;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.util.Date;
 
@@ -22,11 +24,13 @@ public class URLMappingController {
     @GetMapping("/get")
     @ResponseBody
     public String getMapping(@RequestParam("manager_name") String managerName, Date createTime) {
+        System.out.println(managerName);
         return "manager_name" + ":" + managerName + ":" + createTime;
     }
     @PostMapping("/post")
     @ResponseBody
     public String postMapping(String username, String password, @DateTimeFormat(pattern = "yyyy-MM-dd") Date createTime) {
+        System.out.println(username);
         return username + ":" + password + ":" + createTime;
     }
 
@@ -34,5 +38,41 @@ public class URLMappingController {
     @ResponseBody
     public String postMapping1(User user){
         return user.getUsername() + ":" + user.getPassword() + ":" + user.getCreateTime();
+    }
+    @GetMapping("/view")
+    public ModelAndView showView(Integer userId){
+        ModelAndView modelAndView = new ModelAndView("/view.jsp");
+        User user = new User();
+        if(userId == 1){
+            user.setUsername("lily");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }else if(userId == 2){
+            user.setUsername("andy");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }
+        modelAndView.addObject("user",user);
+        return modelAndView;
+    }
+
+    //String与ModelMap的区别
+    //Controller方法返回String的情况
+    //1.方法被@ResponseBody描述，SpringMVC直接响应String字符串本身
+    //2.方法不存在@ResponseBody，则SpringMVC处理String指代的视图（页面）
+    public String showView1(Integer userId, ModelMap modelMap){
+        String view = "/view.jsp";
+        User user = new User();
+        if(userId == 1){
+            user.setUsername("lily");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }else if(userId == 2){
+            user.setUsername("andy");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }
+        modelMap.addAttribute("user",user);
+        return view;
     }
 }

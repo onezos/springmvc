@@ -38,7 +38,20 @@
         @PostHandle 用于描述请求参数绑定
         @AfterHandle 用于描述请求参数绑定
       -->
-    <mvc:annotation-driven conversion-service="conversionService" />
+    <mvc:annotation-driven conversion-service="conversionService">
+        <mvc:message-converters>
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/plain;charset=UTF-8</value>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>text/xml;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
     <!-- 将图片/JS/CSS等静态资源排除在外，可提高执行效率 -->
     <mvc:default-servlet-handler/>
 

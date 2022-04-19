@@ -933,3 +933,161 @@ public class URLMappingController {
 
 ![img.png](src/main/resources/img/img19.png)
 
+
+
+
+
+### 5.8 解决中文乱码
+
+默认情况下，`springMVC`对中文的支持并不好，`Web`应用的中文乱码由于`Tomcat`早期的字符集默认使用字符集`ISO-8859-1`，属于西欧字符集，字符集就像是专给计算机提供的字典一样，帮助计算机理解什么样的指令可以转换什么样的字符。解决乱码的核心思路是将`ISO-8859-1`转换为`UTF-8`。所以作为`Web`应用`Controller`中请求与相应都需要设置`UTF-8`字符集。
+
+中文乱码的配置
+
+- `Get`请求乱码 - `server.xml`增加`URIEncoding`属性
+  修改`Tomcat`的`server.xml`文件，位置`apache-tomcat-8.5.xx\conf`，添加`URIEncoding="UTF-8"`，注意，`Tomcat v8`以后的版本默认就是`URIEncoding="UTF-8"`，因此不需要做修改。
+
+  ```xml
+      <Connector port="8080" protocol="HTTP/1.1"
+                 connectionTimeout="20000"
+                 redirectPort="8443" URIEncoding="UTF-8" />
+  ```
+
+  
+
+- `Post`请求乱码 - `web.xml`增加`CharacterEncodingFilter`
+
+  ![img.png](src/main/resources/img/img20.png)
+
+  控制台输出`&#24352;&#19977;`
+
+  `web.xml`中添加过滤器
+
+  ```xml
+      <filter>
+          <filter-name>characterFilter</filter-name>
+          <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+          <init-param>
+              <param-name>encoding</param-name>
+              <param-value>UTF-8</param-value>
+          </init-param>
+      </filter>
+      <filter-mapping>
+          <filter-name>characterFilter</filter-name>
+          <url-pattern>/*</url-pattern>
+      </filter-mapping>    
+  ```
+
+- `Response`响应乱码 - `Spring`配置`StringHttpMessageConverter`
+
+
+  ```xml
+      <mvc:annotation-driven conversion-service="conversionService">
+          <mvc:message-converters>
+              <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                  <property name="supportedMediaTypes">
+                      <list>
+                          <value>text/plain;charset=UTF-8</value>
+                          <value>text/html;charset=UTF-8</value>
+                          <value>text/xml;charset=UTF-8</value>
+                          <value>application/json;charset=UTF-8</value>
+                      </list>
+                  </property>
+              </bean>
+          </mvc:message-converters>
+      </mvc:annotation-driven>
+  ```
+
+  
+
+### 5.9 响应中产生结果
+
+#### 5.9.1 `@ResponseBody` - 产生响应文本
+
+- `@ResponseBody`直接产生响应体的数据，过程不涉及任何视图
+- `@ResponseBody`可产生标准字符串/JSON/XML等格是数据
+- `@ResponseBody`被`StringHttpMessageConverter`所影响
+
+#### 5.9.2 `ModelAndView` - 利用模板引擎渲染输出
+
+- `ModelAndView`对象是指“模型（数据）与视图（界面）”对象
+- 通过`ModelAndView`可将包含数据对象与模板引擎进行绑定
+- `SpringMVC`中默认的`View`是`JSP`，也可以配置其它模板引擎
+
+我们在`URLMappingController`中添加新的方法`showView`
+
+```java
+    @GetMapping("/view")
+    public ModelAndView showView(){
+        ModelAndView modelAndView = new ModelAndView("/view.jsp");
+        return modelAndView;
+```
+
+创建对应的`View.jsp`
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+    <h1>Hello World</h1></h1>
+</body>
+</html>
+```
+
+
+
+打开网页：
+
+![img.png](src/main/resources/img/img21.png)
+
+因为`JSP`可以动态的生成页面的数据，所以对方法进行一下修改，
+
+需求是根据传入的`userId`动态的生成用户数据
+```java
+    @GetMapping("/view")
+    public ModelAndView showView(Integer userId){
+        ModelAndView modelAndView = new ModelAndView("/view.jsp");
+        User user = new User();
+        if(userId == 1){
+            user.setUsername("lily");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }else if(userId == 2){
+            user.setUsername("andy");
+            user.setPassword("123456");
+            user.setCreateTime(new Date());
+        }
+        modelAndView.addObject("user",user);
+        return modelAndView;
+    }
+```
+修改`jsp`页面
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+    <h1>Hello World</h1></h1>
+    <hr>
+    <h2>UserName: ${user.username}</h2><br>
+    <h2>Password: ${user.password}</h2><br>
+    <h2>CreateTime: ${user.createTime}</h2><br>
+</body>
+</html>
+```
+打开网页输入网址
+
+![img.png](src/main/resources/img/img22.png)
+
+![img.png](src/main/resources/img/img23.png)
+
+## 6 ModelAndView
+
+- `modeAndView.addObject()`方法设置的属性默认存放在当前请求中
+
+- 默认`ModelAndView`使用请求转发`(forward)`至页面
+
+- 重定向使用`new ModelAndView("redirect:/index.jsp")`
